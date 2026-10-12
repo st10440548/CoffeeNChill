@@ -1,0 +1,470 @@
+{
+  "info": {
+    "name": "CoffeeNChill Parts 1 and 2",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Run core folder using Collection Runner with 1000ms delay. Documents require real Azure Files configuration."
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:7071"
+    }
+  ],
+  "item": [
+    {
+      "name": "Core - menu and asynchronous orders",
+      "item": [
+        {
+          "name": "01 Create menu item",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/menu",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Category\": \"Hot Drinks\",\n  \"Id\": \"{{menuId}}\",\n  \"Name\": \"Espresso\",\n  \"Description\": \"Fresh espresso\",\n  \"Price\": 25.0,\n  \"IsAvailable\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.collectionVariables.set(\"menuId\", \"COF-\"+Date.now());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 List menu",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/menu"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Created item is present\",()=>pm.expect(pm.response.json().some(x=>x.id===pm.collectionVariables.get(\"menuId\") || x.Id===pm.collectionVariables.get(\"menuId\"))).to.be.true);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 Filter category",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/menu/category/Hot%20Drinks"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 Update menu",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/menu/Hot%20Drinks/{{menuId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Price\": 27.5,\n  \"IsAvailable\": false\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 Reject invalid menu",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/menu",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Category\": \"Hot Drinks\",\n  \"Id\": \"BAD\",\n  \"Name\": \"Invalid\",\n  \"Price\": -2,\n  \"IsAvailable\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 Queue order",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/orders/queue",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"OrderId\": \"{{orderId}}\",\n  \"CustomerName\": \"Jane Smith\",\n  \"SelectedItemSKUs\": [\n    \"{{menuId}}\",\n    \"PAS-104\"\n  ],\n  \"TotalPrice\": 65,\n  \"OrderTimestamp\": \"{{orderTimestamp}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const d=new Date(); pm.collectionVariables.set(\"orderId\",\"ORD-\"+d.getTime()); pm.collectionVariables.set(\"orderTimestamp\",d.toISOString());"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 202\", () => pm.response.to.have.status(202));",
+                  "const r=pm.response.json(); pm.collectionVariables.set(\"orderDate\",r.orderDate || r.OrderDate); pm.collectionVariables.set(\"pollCount\",\"0\");"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 Poll status until collected",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/orders/{{orderDate}}/{{orderId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "let n=Number(pm.collectionVariables.get(\"pollCount\")||0)+1;\npm.collectionVariables.set(\"pollCount\",String(n));\nconst data=pm.response.code===200 ? pm.response.json() : {};\nconst status=data.status || data.Status;\nif ((pm.response.code===404 || (pm.response.code===200 && status!==\"Collected\")) && n<40) {\n  pm.execution.setNextRequest(\"07 Poll status until collected\");\n} else {\n  pm.test(\"Order reached Collected\",()=>{pm.response.to.have.status(200);pm.expect(status).to.eql(\"Collected\");});\n  pm.test(\"Every transition was persisted\",()=>{\n    [\"ReceivedAt\",\"PreparingAt\",\"ReadyAt\",\"CollectedAt\"].forEach(k=>pm.expect(data[k] || data[k.charAt(0).toLowerCase()+k.slice(1)]).to.be.ok);\n  });\n}"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 Invalid order rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/orders/queue",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"OrderId\": \"BAD\",\n  \"CustomerName\": \"\",\n  \"SelectedItemSKUs\": [],\n  \"TotalPrice\": -1\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09 Missing order",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/orders/2000-01-01/NOT-FOUND"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10 Delete menu",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": "{{baseUrl}}/api/menu/Hot%20Drinks/{{menuId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 204\", () => pm.response.to.have.status(204));",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11 Update deleted item",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/menu/Hot%20Drinks/{{menuId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"Price\": 20\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));",
+                  ""
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Documents - requires Azure Files",
+      "item": [
+        {
+          "name": "12 Upload staff document",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/documents/upload",
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": "sample-staff-document.txt"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 201\", () => pm.response.to.have.status(201));",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13 List staff documents",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/documents"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14 Download staff document",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/documents/download/sample-staff-document.txt"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"File contents returned\",()=>pm.expect(pm.response.text()).to.include(\"espresso\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15 Missing document",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/documents/download/not-found.pdf"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 404\", () => pm.response.to.have.status(404));",
+                  ""
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16 Invalid upload",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/documents/upload",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"HTTP 400\", () => pm.response.to.have.status(400));",
+                  ""
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
