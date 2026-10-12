@@ -4,9 +4,11 @@ C# .NET 8 isolated Azure Functions for a campus canteen. Part 1 stores menu item
 
 ## Start here
 
-This source package has been statically checked, but **has not been compiled or run** in its generation environment (no .NET SDK or Docker was available). Build it and run the Postman collection before submitting. Do not submit the ZIP: submit your GitHub repository link.
+The application was successfully built and run on an Apple M1 Mac using Docker Desktop. The Functions image uses linux/amd64 emulation. Docker Compose started both services, and Azurite reported healthy.
 
-Install Docker Desktop and Postman. Run commands from this folder. Docker builds the .NET app, so the .NET SDK is optional on your host. A local Functions run additionally needs .NET 8 SDK and Azure Functions Core Tools v4.
+All 11 core Postman requests were tested individually and passed. Tests covered menu creation, listing, category filtering, updating, deletion, invalid inputs, order queuing, order status and missing orders. The test order reached Collected, with timestamps persisted for Received, Preparing, Ready and Collected.
+
+Azure Files document endpoints have not yet been tested.
 
 1. Copy `.env.example` to `.env` and replace `yourdockerhubusername` with your actual username.
 2. Make your two Docker Hub repositories public: `coffeenchill-functions` and `coffeenchill-azurite`.
