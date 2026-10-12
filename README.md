@@ -1,8 +1,4 @@
-# CoffeeNChill — CLDV6212 Parts 1 and 2
 
-C# .NET 8 isolated Azure Functions for a campus canteen. Part 1 stores menu items in Azure Tables and staff documents in Azure Files. Part 2 immediately accepts orders with HTTP 202, queues them in `order-processing-queue`, and processes them with a background queue trigger. Each order is stored in `Orders` with its UTC order date as PartitionKey and OrderId as RowKey. Status progresses Received → Preparing → Ready → Collected, with timestamps retained for evidence.
-
-## Start here
 
 The application was successfully built and run on an Apple M1 Mac using Docker Desktop. The Functions image uses linux/amd64 emulation. Docker Compose started both services, and Azurite reported healthy.
 
@@ -104,14 +100,15 @@ Each transition waits three seconds by default. The automatic Collected transiti
 - Added Docker Compose pulling published v2.0 Functions and v1.0 Azurite images.
 - Updated Postman collection, setup guide and demo checklist.
 
-## Team contributions — replace before submission
+## Team contributions 
+Ronald - st10440548
+Docker setup and publishing, Postman testing, troubleshooting, and documentation updates
 
-| Member / student number | Actual work completed | Relevant commits |
-|---|---|---|
-| ADD REAL MEMBER | ADD VERIFIED CONTRIBUTIONS | ADD COMMIT LINKS |
+## Project links
 
-Each student must make at least five meaningful commits per part using their own GitHub account. Record actual contributions; do not invent authors, dates or empty commits. See `docs/SUBMISSION.md` for a task breakdown and video checklist.
-
+- GitHub: https://github.com/st10440548/CoffeeNChill
+- Functions image: https://hub.docker.com/r/primetimeron/coffeenchill-functions
+- Azurite image: https://hub.docker.com/r/primetimeron/coffeenchill-azurite
 
 
 Unlisted YouTube URL: ****
