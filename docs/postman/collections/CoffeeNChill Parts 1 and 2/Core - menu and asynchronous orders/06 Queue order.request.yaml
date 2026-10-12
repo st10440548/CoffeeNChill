@@ -1,0 +1,28 @@
+$kind: http-request
+url: "{{baseUrl}}/api/orders/queue"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "OrderId": "{{orderId}}",
+      "CustomerName": "Jane Smith",
+      "SelectedItemSKUs": [
+        "{{menuId}}",
+        "PAS-104"
+      ],
+      "TotalPrice": 65,
+      "OrderTimestamp": "{{orderTimestamp}}"
+    }
+scripts:
+  - type: beforeRequest
+    code: const d=new Date(); pm.collectionVariables.set("orderId","ORD-"+d.getTime()); pm.collectionVariables.set("orderTimestamp",d.toISOString());
+    language: text/javascript
+  - type: afterResponse
+    code: |-
+      pm.test("HTTP 202", () => pm.response.to.have.status(202));
+      const r=pm.response.json(); pm.collectionVariables.set("orderDate",r.orderDate || r.OrderDate); pm.collectionVariables.set("pollCount","0");
+    language: text/javascript
+order: 6000

@@ -1,0 +1,9 @@
+$kind: http-request
+url: "{{baseUrl}}/api/menu/Hot%20Drinks/{{menuId}}"
+method: DELETE
+scripts:
+  - type: afterResponse
+    code: |
+      pm.test("HTTP 204", () => pm.response.to.have.status(204));
+    language: text/javascript
+order: 10000

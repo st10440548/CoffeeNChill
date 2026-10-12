@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{baseUrl}}/api/documents/upload"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: file
+      key: file
+      src:
+        - sample-staff-document.txt
+scripts:
+  - type: afterResponse
+    code: |
+      pm.test("HTTP 201", () => pm.response.to.have.status(201));
+    language: text/javascript
+order: 1000

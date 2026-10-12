@@ -1,0 +1,4 @@
+$kind: collection
+description: Run core folder using Collection Runner with 1000ms delay. Documents require real Azure Files configuration.
+variables:
+  baseUrl: http://localhost:7071

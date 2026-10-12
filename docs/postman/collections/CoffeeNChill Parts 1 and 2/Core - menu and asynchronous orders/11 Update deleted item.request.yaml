@@ -1,0 +1,17 @@
+$kind: http-request
+url: "{{baseUrl}}/api/menu/Hot%20Drinks/{{menuId}}"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "Price": 20
+    }
+scripts:
+  - type: afterResponse
+    code: |
+      pm.test("HTTP 404", () => pm.response.to.have.status(404));
+    language: text/javascript
+order: 11000

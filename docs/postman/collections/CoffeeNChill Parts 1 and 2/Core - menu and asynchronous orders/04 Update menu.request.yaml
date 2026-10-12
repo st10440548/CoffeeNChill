@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{baseUrl}}/api/menu/Hot%20Drinks/{{menuId}}"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "Price": 27.5,
+      "IsAvailable": false
+    }
+scripts:
+  - type: afterResponse
+    code: |
+      pm.test("HTTP 200", () => pm.response.to.have.status(200));
+    language: text/javascript
+order: 4000

@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{baseUrl}}/api/orders/{{orderDate}}/{{orderId}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      let n=Number(pm.collectionVariables.get("pollCount")||0)+1;
+      pm.collectionVariables.set("pollCount",String(n));
+      const data=pm.response.code===200 ? pm.response.json() : {};
+      const status=data.status || data.Status;
+      if ((pm.response.code===404 || (pm.response.code===200 && status!=="Collected")) && n<40) {
+        pm.execution.setNextRequest("07 Poll status until collected");
+      } else {
+        pm.test("Order reached Collected",()=>{pm.response.to.have.status(200);pm.expect(status).to.eql("Collected");});
+        pm.test("Every transition was persisted",()=>{
+          ["ReceivedAt","PreparingAt","ReadyAt","CollectedAt"].forEach(k=>pm.expect(data[k] || data[k.charAt(0).toLowerCase()+k.slice(1)]).to.be.ok);
+        });
+      }
+    language: text/javascript
+order: 7000
