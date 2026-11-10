@@ -19,13 +19,14 @@ From the repository root, with Docker Compose running and local `.env` populated
 BASE_URL=http://localhost:5080 bash scripts/part3-smoke.sh
 BASE_URL=http://localhost:5080 python3 scripts/part3-admin-staff-test.py
 BASE_URL=http://localhost:5080 python3 scripts/part3-menu-crud-test.py
+BASE_URL=http://localhost:5080 python3 scripts/part3-order-queue-test.py
 ```
 
-The Admin/Staff test creates a unique temporary-named Staff account that persists in the local user table. The menu test removes its own test item. These new scripts were committed after equivalent manual checks passed; they have not yet been rerun from their committed paths.
+The Admin/Staff test creates a unique temporary-named Staff account that persists in the local user table. The menu test removes its own test item. These new scripts were committed after equivalent manual checks passed; they have not yet been rerun from their committed paths. The order-queue test script likewise reproduces a manually passed test.
 
 ## Not yet verified
 
-- Order queue processing and status transitions.
+- Order queue processing and status transitions: verified on 2026-11-10. POST /api/orders/queue returned HTTP 202, followed by observed Received → Preparing → Ready → Collected states via GET /api/orders/{orderDate}/{orderId}.
 - Authorized Staff menu operations and Staff order-status updates.
 - Azure Files document operations (require a real Azure Files connection string; Azurite does not emulate Azure Files).
 - Docker Hub publication and VPS deployment.
