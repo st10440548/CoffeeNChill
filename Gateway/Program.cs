@@ -48,5 +48,17 @@ app.UseSwaggerUI();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
+// Bootstrap an administrator only when explicitly configured by the operator.
+// Remove bootstrap credentials from the environment after first deployment.
+var bootstrapEmail = app.Configuration["BootstrapAdmin:Email"];
+var bootstrapPassword = app.Configuration["BootstrapAdmin:Password"];
+if (!string.IsNullOrWhiteSpace(bootstrapEmail) && !string.IsNullOrWhiteSpace(bootstrapPassword))
+{
+    if (bootstrapPassword.Length < 12)
+        throw new InvalidOperationException("BootstrapAdmin password must contain at least 12 characters.");
+    using var scope = app.Services.CreateScope();
+    var store = scope.ServiceProvider.GetRequiredService<UserStore>();
+    await store.CreateAsync(bootstrapEmail.Trim().ToLowerInvariant(), "Administrator", bootstrapPassword, "Admin");
+}
 app.MapGet("/health", () => Results.Ok(new { status = "ok" }));
 app.Run();
