@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace CoffeeNChill.Gateway.Controllers;
 
+public sealed record OrderStatusRequest(string OrderDate, string OrderId, string Status);
 public sealed record OrderRequest(string OrderId, string CustomerName, string[] SelectedItemSKUs, double TotalPrice, DateTimeOffset OrderTimestamp);
 
 /// <summary>Public order submission and status retrieval.</summary>
@@ -16,6 +17,11 @@ public sealed class OrdersController(IHttpClientFactory clients) : ControllerBas
     /// <summary>Submit an order asynchronously; returns 202 when queued.</summary>
     [HttpPost("queue"), AllowAnonymous]
     public async Task<IActionResult> Queue(OrderRequest input) => await Forward(await Client.PostAsJsonAsync("api/orders/queue", input));
+    /// <summary>Advance order status (Staff/Admin only).</summary>
+    [HttpPut("status"), Authorize(Roles = "Admin,Staff")]
+    public async Task<IActionResult> UpdateStatus(OrderStatusRequest input) =>
+        await Forward(await Client.PutAsJsonAsync("api/orders/status", input));
+
     /// <summary>Get the status of an existing order.</summary>
     [HttpGet("{orderDate}/{orderId}"), AllowAnonymous]
     public async Task<IActionResult> Get(string orderDate, string orderId) =>
