@@ -8,5 +8,5 @@
 <PackageReference Include="Azure.Data.Tables" Version="12.9.1" />
 <PackageReference Include="Azure.Storage.Queues" Version="12.20.1" />
 <PackageReference Include="Azure.Storage.Files.Shares" Version="12.18.0" />
-</ItemGroup><ItemGroup><None Update="host.json"><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></None><None Update="local.settings.json"><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory><CopyToPublishDirectory>Never</CopyToPublishDirectory></None></ItemGroup>
+</ItemGroup><ItemGroup><Compile Remove="Gateway/**/*.cs" /><None Remove="Gateway/**" /></ItemGroup><ItemGroup><None Update="host.json"><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory></None><None Update="local.settings.json"><CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory><CopyToPublishDirectory>Never</CopyToPublishDirectory></None></ItemGroup>
 </Project>

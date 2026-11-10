@@ -1,0 +1,24 @@
+name: Part 3 build validation
+on:
+  push:
+    branches: [feature/part3-secure-gateway]
+  pull_request:
+    branches: [main]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Build Functions
+        run: dotnet build CoffeeNChill.csproj -c Release
+      - name: Build Gateway
+        run: dotnet build Gateway/CoffeeNChill.Gateway.csproj -c Release
+      - name: Validate Postman JSON
+        run: python3 -m json.tool docs/CoffeeNChill-Part3.postman_collection.json > /dev/null
+      - name: Validate Docker Compose configuration
+        run: DOCKERHUB_USERNAME=example JWT_SECRET=0123456789abcdef0123456789abcdef docker compose config --quiet
+      - name: Check smoke script syntax
+        run: bash -n scripts/part3-smoke.sh

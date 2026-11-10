@@ -1,10 +1,30 @@
+# CoffeeNChill — Parts 1, 2 and 3
+
+## Part 3: secure ASP.NET Core gateway
+
+Part 3 is being developed on the `feature/part3-secure-gateway` branch. The `main` branch remains the original Part 2 submission until verified and approved.
+
+- Gateway Swagger: `http://localhost:5000/swagger` locally; [Azure VM Swagger (HTTP coursework demo)](http://172.209.216.237:5000/swagger)
+- Gateway project: `Gateway/CoffeeNChill.Gateway.csproj`
+- Part 3 Postman collection: `docs/CoffeeNChill-Part3.postman_collection.json`
+- Deployment and verification guide: [docs/PART3-DEPLOYMENT.md](docs/PART3-DEPLOYMENT.md)
+- Gateway smoke checks: `BASE_URL=http://localhost:5000 bash scripts/part3-smoke.sh`
+- Part 3 Azure VM API: `http://172.209.216.237:5000` (verified 2026-11-10: `/health` and `/api/menu` HTTP 200).
+- Part 3 YouTube demonstration: [CoffeeNChill Part 3 video (unlisted)](https://youtu.be/sKwMP8QjEaw).
+
+**Security:** the gateway needs a random JWT secret, and public registration creates only Customer accounts. Staff accounts are provisioned by Admin. The Functions HTTP port is not published directly by the Part 3 Compose configuration. Azure Files is connected to a real Azure Storage account on the VM and document upload/list/download/delete have passed. Azurite does not emulate File Shares. The VM's public endpoint is plain HTTP: do not send credentials or JWTs over it; use localhost over SSH for sensitive tests until HTTPS is configured.
+
+---
+
+## Previous Parts 1 and 2 instructions
+
 
 
 The application was successfully built and run on an Apple M1 Mac using Docker Desktop. The Functions image uses linux/amd64 emulation. Docker Compose started both services, and Azurite reported healthy.
 
 All 11 core Postman requests were tested individually and passed. Tests covered menu creation, listing, category filtering, updating, deletion, invalid inputs, order queuing, order status and missing orders. The test order reached Collected, with timestamps persisted for Received, Preparing, Ready and Collected.
 
-Azure Files document endpoints have not yet been tested.
+Azure Files document endpoints were subsequently verified on the Part 3 Azure VM on 2026-11-10 (upload 201, list 200, download/content check 200, delete 204).
 
 1. Copy `.env.example` to `.env` and replace `yourdockerhubusername` with your actual username.
 2. Make your two Docker Hub repositories public: `coffeenchill-functions` and `coffeenchill-azurite`.
