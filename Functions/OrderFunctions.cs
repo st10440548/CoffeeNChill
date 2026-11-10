@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using System.Text.Json;
 namespace CoffeeNChill;
 public sealed record OrderInput(string OrderId,string CustomerName,string[] SelectedItemSKUs,double TotalPrice,DateTimeOffset OrderTimestamp);
+public sealed record OrderStatusInput(string OrderDate,string OrderId,string Status);
 public sealed class OrderFunctions(Storage storage,ILogger<OrderFunctions> logger)
 {
     static readonly JsonSerializerOptions Json=new(){PropertyNameCaseInsensitive=true};
@@ -39,13 +40,52 @@ public sealed class OrderFunctions(Storage storage,ILogger<OrderFunctions> logge
         for(var i=index+1;i<states.Length;i++)
         {
             await Task.Delay(TimeSpan.FromSeconds(delay),cancellationToken);
+            // A staff update may have advanced the order while the worker was sleeping.
+            e=(await t.GetEntityAsync<TableEntity>(date,o.OrderId,cancellationToken:cancellationToken)).Value;
+            var current=Array.IndexOf(states,e.GetString("Status"));
+            if(current>=i)continue;
+            if(current<0)throw new InvalidOperationException("Unknown stored status.");
             e["Status"]=states[i];e[states[i]+"At"]=DateTimeOffset.UtcNow;
             // Optimistic concurrency prevents another worker from regressing the state.
-            await t.UpdateEntityAsync(e,e.ETag,TableUpdateMode.Replace,cancellationToken);
+            try { await t.UpdateEntityAsync(e,e.ETag,TableUpdateMode.Replace,cancellationToken); }
+            catch(RequestFailedException ex) when(ex.Status==412) { logger.LogInformation("Order {OrderId} was concurrently updated; retrying via queue.",o.OrderId); throw; }
             e=(await t.GetEntityAsync<TableEntity>(date,o.OrderId,cancellationToken:cancellationToken)).Value;
             logger.LogInformation("Order {OrderId}: {Status}",o.OrderId,e.GetString("Status"));
         }
     }
+    [Function("UpdateOrderStatus")]
+    public async Task<IActionResult> UpdateStatus([HttpTrigger(AuthorizationLevel.Anonymous,"put",Route="orders/status")] HttpRequest req)
+    {
+        OrderStatusInput? input;
+        try { input=await JsonSerializer.DeserializeAsync<OrderStatusInput>(req.Body,Json); }
+        catch(JsonException) { return new BadRequestObjectResult("Invalid JSON."); }
+        if(input is null || !Storage.ValidKey(input.OrderDate) || !Storage.ValidKey(input.OrderId)
+           || !new[]{"Received","Preparing","Ready","Collected"}.Contains(input.Status))
+            return new BadRequestObjectResult("Provide OrderDate, OrderId and a valid Status.");
+        var table=storage.Orders;await table.CreateIfNotExistsAsync();
+        for(var attempt=0;attempt<3;attempt++)
+        {
+            var result=await table.GetEntityIfExistsAsync<TableEntity>(input.OrderDate,input.OrderId);
+            if(!result.HasValue)return new NotFoundResult();
+            var entity=result.Value;
+            var states=new[]{"Received","Preparing","Ready","Collected"};
+            var oldIndex=Array.IndexOf(states,entity.GetString("Status"));
+            var newIndex=Array.IndexOf(states,input.Status);
+            if(oldIndex<0)return new ConflictObjectResult("Stored order status is invalid.");
+            if(newIndex<oldIndex)return new ConflictObjectResult("Order status cannot move backwards.");
+            if(newIndex==oldIndex)return new OkObjectResult(new{input.OrderDate,input.OrderId,Status=input.Status});
+            entity["Status"]=input.Status;
+            entity[input.Status+"At"]=DateTimeOffset.UtcNow;
+            try
+            {
+                await table.UpdateEntityAsync(entity,entity.ETag,TableUpdateMode.Replace);
+                return new OkObjectResult(new{input.OrderDate,input.OrderId,Status=input.Status});
+            }
+            catch(RequestFailedException ex) when(ex.Status==412) { /* retry concurrent update */ }
+        }
+        return new ConflictObjectResult("Concurrent update; please retry.");
+    }
+
     [Function("GetOrderStatus")]
     public async Task<IActionResult> Get([HttpTrigger(AuthorizationLevel.Anonymous,"get",Route="orders/{orderDate}/{orderId}")] HttpRequest req,string orderDate,string orderId)
     {
