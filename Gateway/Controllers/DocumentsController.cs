@@ -35,7 +35,7 @@ public sealed class DocumentsController(IHttpClientFactory clients) : Controller
         return File(await response.Content.ReadAsByteArrayAsync(), "application/octet-stream", fileName);
     }
 
-    /// <summary>Delete a staff document (not supported by the existing Functions backend).</summary>
+    /// <summary>Delete a staff document.</summary>
     [HttpDelete("{fileName}")]
-    public IActionResult Delete(string fileName) => StatusCode(501, "Document deletion is pending backend implementation.");
+    public async Task<IActionResult> Delete(string fileName) => await Forward(await Client.DeleteAsync("api/documents/" + Uri.EscapeDataString(fileName)));
 }
