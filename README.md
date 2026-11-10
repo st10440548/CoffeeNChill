@@ -10,7 +10,7 @@ Part 3 is being developed on the `feature/part3-secure-gateway` branch. The `mai
 - Deployment and verification guide: [docs/PART3-DEPLOYMENT.md](docs/PART3-DEPLOYMENT.md)
 - Gateway smoke checks: `BASE_URL=http://localhost:5000 bash scripts/part3-smoke.sh`
 - Part 3 Azure VM API: `http://172.209.216.237:5000` (verified 2026-11-10: `/health` and `/api/menu` HTTP 200).
-- Part 3 YouTube demonstration: **pending new Part 3 recording** (the existing YouTube link below belongs to earlier work).
+- Part 3 YouTube demonstration: [CoffeeNChill Part 3 video (unlisted)](https://youtu.be/sKwMP8QjEaw).
 
 **Security:** the gateway needs a random JWT secret, and public registration creates only Customer accounts. Staff accounts are provisioned by Admin. The Functions HTTP port is not published directly by the Part 3 Compose configuration. Azure Files is connected to a real Azure Storage account on the VM and document upload/list/download/delete have passed. Azurite does not emulate File Shares. The VM's public endpoint is plain HTTP: do not send credentials or JWTs over it; use localhost over SSH for sensitive tests until HTTPS is configured.
 
