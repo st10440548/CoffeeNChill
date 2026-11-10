@@ -8,6 +8,7 @@ public sealed class UserStore(TableServiceClient storage)
 {
     private readonly PasswordHasher<UserProfile> hasher = new();
     private TableClient Users => storage.GetTableClient("Users");
+    private TableClient EmailIndex => storage.GetTableClient("UserEmailIndex");
 
     public async Task<UserProfile?> FindAsync(string email)
     {
@@ -22,16 +23,29 @@ public sealed class UserStore(TableServiceClient storage)
         return null;
     }
 
-    public async Task<bool> RegisterAsync(string email, string fullName, string password)
+    public async Task<bool> RegisterAsync(string email, string fullName, string password) =>
+        await CreateAsync(email, fullName, password, "Customer");
+
+    public async Task<bool> CreateAsync(string email, string fullName, string password, string role)
     {
+        if (role is not ("Customer" or "Staff" or "Admin")) throw new ArgumentException("Invalid role.");
         var table = Users;
         await table.CreateIfNotExistsAsync();
+        var index = EmailIndex;
+        await index.CreateIfNotExistsAsync();
         if (await FindAsync(email) is not null) return false;
-        // Public registration never grants Staff/Admin privileges.
-        var user = new UserProfile { PartitionKey = "Customer", RowKey = email, FullName = fullName, CreatedDate = DateTimeOffset.UtcNow };
+        // Unique email reservation blocks concurrent registrations across role partitions.
+        var reservation = new TableEntity("Email", email) { ["Role"] = role };
+        try { await index.AddEntityAsync(reservation); }
+        catch (RequestFailedException ex) when (ex.Status == 409) { return false; }
+        var user = new UserProfile { PartitionKey = role, RowKey = email, FullName = fullName, CreatedDate = DateTimeOffset.UtcNow };
         user.PasswordHash = hasher.HashPassword(user, password);
         try { await table.AddEntityAsync(user); return true; }
-        catch (RequestFailedException ex) when (ex.Status == 409) { return false; }
+        catch
+        {
+            // Preserve the reservation on failure to avoid cross-role duplicate accounts.
+            throw;
+        }
     }
 
     public async Task<UserProfile?> VerifyAsync(string email, string password)
