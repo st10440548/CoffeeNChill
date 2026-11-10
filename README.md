@@ -1,20 +1,77 @@
 # CoffeeNChill — Parts 1, 2 and 3
 
-## Part 3: secure ASP.NET Core gateway
+## Part 3 — Secure API Gateway and Azure VPS deployment
 
-Part 3 is being developed on the `feature/part3-secure-gateway` branch. The `main` branch remains the original Part 2 submission until verified and approved.
+**Submission:** Part 3 is merged into `main` (PR [#1](https://github.com/st10440548/CoffeeNChill/pull/1)). This README starts with the Part 3 submission evidence; previous Parts 1 and 2 instructions remain below.
 
-- Gateway Swagger: `http://localhost:5000/swagger` locally; [Azure VM Swagger (HTTP coursework demo)](http://172.209.216.237:5000/swagger)
-- Gateway project: `Gateway/CoffeeNChill.Gateway.csproj`
-- Part 3 Postman collection: `docs/CoffeeNChill-Part3.postman_collection.json`
-- Deployment and verification guide: [docs/PART3-DEPLOYMENT.md](docs/PART3-DEPLOYMENT.md)
-- Gateway smoke checks: `BASE_URL=http://localhost:5000 bash scripts/part3-smoke.sh`
-- Part 3 Azure VM API: `http://172.209.216.237:5000` (verified 2026-11-10: `/health` and `/api/menu` HTTP 200).
-- Part 3 YouTube demonstration: [CoffeeNChill Part 3 video (unlisted)](https://youtu.be/sKwMP8QjEaw).
+### Submission links
 
-**Security:** the gateway needs a random JWT secret, and public registration creates only Customer accounts. Staff accounts are provisioned by Admin. The Functions HTTP port is not published directly by the Part 3 Compose configuration. Azure Files is connected to a real Azure Storage account on the VM and document upload/list/download/delete have passed. Azurite does not emulate File Shares. The VM's public endpoint is plain HTTP: do not send credentials or JWTs over it; use localhost over SSH for sensitive tests until HTTPS is configured.
+| Resource | Link |
+| --- | --- |
+| GitHub source and commit history | [CoffeeNChill repository](https://github.com/st10440548/CoffeeNChill) |
+| Part 3 video presentation | [Unlisted YouTube demonstration](https://youtu.be/sKwMP8QjEaw) |
+| Live Azure VM Swagger UI | [http://172.209.216.237:5000/swagger](http://172.209.216.237:5000/swagger) |
+| Live health endpoint | [http://172.209.216.237:5000/health](http://172.209.216.237:5000/health) |
+| Live public menu endpoint | [http://172.209.216.237:5000/api/menu](http://172.209.216.237:5000/api/menu) |
+| Deployment instructions | [Part 3 deployment guide](docs/PART3-DEPLOYMENT.md) |
+| Test evidence | [Part 3 verification report](docs/PART3-LOCAL-TEST-RESULTS.md) |
+| Postman collection | [Part 3 Postman JSON](docs/CoffeeNChill-Part3.postman_collection.json) |
+
+The public health and menu endpoints returned HTTP 200 during verification on **2026-11-10**. Availability may change if the VM is stopped. The public endpoint is **HTTP only**; do not submit passwords or JWTs over the public connection.
+
+### System architecture
+
+```mermaid
+flowchart TD
+    Client["Browser / Postman / API client"] --> Gateway["ASP.NET Core API Gateway<br/>Swagger, JWT, role authorization"]
+    subgraph VM["Azure Ubuntu Linux VM — Docker Compose"]
+      Gateway --> Functions["Azure Functions<br/>Menu, orders, documents"]
+      Gateway --> Azurite["Azurite<br/>Table and Queue emulation"]
+      Functions --> Azurite
+    end
+    Functions --> Files["Azure Storage Account<br/>Azure File Shares"]
+    Hub["Docker Hub images"] -.-> VM
+    GitHub["GitHub repository + Actions CI"] -.-> Hub
+```
+
+The Gateway is exposed on VM port `5000`; the Functions HTTP port is internal to the Docker network. The Gateway handles JWT authentication and role-based access control for **Admin**, **Staff**, and **Customer** users. User profiles are persisted in Azure Table-compatible storage, and passwords are hashed. Public registration creates Customer accounts; Administrators provision Staff accounts. Orders are queued and progress through Received → Preparing → Ready → Collected. Azure Files uses a real Azure Storage account because Azurite does not emulate File Shares.
+
+### Project structure
+
+| Path | Purpose |
+| --- | --- |
+| `Gateway/` | ASP.NET Core API Gateway, authentication, Swagger and controllers |
+| `Functions/` | Azure Functions business logic and storage integrations |
+| `docker-compose.yml` | Container orchestration |
+| `docs/` | Postman collection, deployment instructions and verification evidence |
+| `scripts/` | Smoke and integration tests |
+| `.github/workflows/` | CI and image-publishing workflow definitions |
+
+### Running and verifying Part 3
+
+1. Read [the deployment guide](docs/PART3-DEPLOYMENT.md) for Docker images, environment variables and Azure VM configuration. Copy the example environment file and provide your own secrets; **never commit `.env` or credentials**.
+2. With the deployment configured, run `docker compose pull && docker compose up -d`, then `docker compose ps`.
+3. Open `http://localhost:5000/swagger` on the host (or the public Swagger URL above for non-sensitive GET requests).
+4. Run the integration checks on the VM, using localhost:
+
+```bash
+BASE_URL=http://localhost:5000 bash scripts/part3-smoke.sh
+BASE_URL=http://localhost:5000 python3 scripts/part3-admin-staff-test.py
+BASE_URL=http://localhost:5000 python3 scripts/part3-menu-crud-test.py
+BASE_URL=http://localhost:5000 python3 scripts/part3-order-queue-test.py
+BASE_URL=http://localhost:5000 python3 scripts/part3-staff-permissions-test.py
+```
+
+**Verification evidence (2026-11-10):** all five integration test suites passed against the Azure VM. Verified flows include Administrator/Staff login, Customer restrictions (401/403), menu CRUD, order processing, and Azure Files upload (201), list (200), download/content check (200), and delete (204). See the [test report](docs/PART3-LOCAL-TEST-RESULTS.md) for details.
+
+**Postman:** the Part 3 collection is provided for API testing, but a complete Part 3 Postman Runner execution is **not claimed** as verified or demonstrated in the submitted video. The Python integration suites are separate evidence.
+
+**CI/CD scope:** GitHub Actions workflow definitions exist for validation and image publishing. Images were published and deployed using Docker Hub and Compose; an automated SSH deployment from GitHub Actions is not claimed.
+
+**Security note:** the coursework VM's public port 5000 is plain HTTP. For JWT or password-based testing, use an SSH tunnel to `127.0.0.1:5000` on the VM or configure HTTPS first.
 
 ---
+
 
 ## Previous Parts 1 and 2 instructions
 
