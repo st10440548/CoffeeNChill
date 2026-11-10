@@ -37,6 +37,8 @@ services:
       Jwt__Key: ${JWT_SECRET:?Set JWT_SECRET in .env to at least 32 random bytes}
       Jwt__Issuer: CoffeeNChill
       Jwt__Audience: CoffeeNChillClients
+      BootstrapAdmin__Email: ${BOOTSTRAP_ADMIN_EMAIL:-}
+      BootstrapAdmin__Password: ${BOOTSTRAP_ADMIN_PASSWORD:-}
     depends_on:
       - functions
     restart: unless-stopped
