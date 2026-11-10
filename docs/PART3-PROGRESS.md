@@ -11,12 +11,12 @@ Branch: `feature/part3-secure-gateway`. Do not merge into main until validated.
 - Gateway Dockerfile and GitHub Actions build validation
 
 ## Outstanding
-- Add staff-only order status update with concurrency handling and queue-worker coordination
-- Document deletion backend and forwarding
+- Verify staff-only order status update and queue-worker concurrency under integration tests
+- Verify document deletion backend and forwarding with real Azure Files
 - Robust role provisioning for initial staff/admin accounts (never through public registration)
 - Race-safe uniqueness across Azure Table role partitions
 - Integration tests, Postman Part 3 collection, build checks and fixes
-- Docker Compose production gateway integration and secure environment configuration
+- Verify Docker Compose gateway integration and harden deployment configuration
 - Docker Hub publishing, VPS provisioning, deployment, live validation and demonstration
 - Production readiness: rate limiting, error handling, upstream timeouts, request validation, safe Swagger exposure
 
