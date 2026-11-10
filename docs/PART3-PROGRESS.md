@@ -1,25 +1,32 @@
-# Part 3 implementation progress
+# CoffeeNChill Part 3 — implementation handoff
 
-Branch: `feature/part3-secure-gateway`. Do not merge into main until validated.
+Branch: `feature/part3-secure-gateway`; draft PR #1. `main` is unchanged.
 
-## Implemented (requires build and integration verification)
-- Separate .NET 8 ASP.NET Core gateway, Swagger/OpenAPI and XML comments
-- Azure Table `Users`, Customer registration and PBKDF2 password hashing via ASP.NET Identity
-- JWT login with Name, Email and Role claims
-- Role-based restrictions for menu writes and document endpoints
-- Anonymous menu reading and order submission
-- Gateway Dockerfile and GitHub Actions build validation
+## Implemented in source
+- Separate .NET 8 ASP.NET Core gateway with Swagger, XML documentation, JWT bearer validation
+- `Users` Azure Table profiles and `UserEmailIndex` email reservations; Identity PBKDF2 password hashing
+- Public Customer registration, login, opt-in Admin bootstrap, Admin-only Staff creation
+- Role-protected menu writes, order status updates, staff document operations
+- Public menu read, queue order submission and order status read
+- Functions order status update with ETag optimistic concurrency and queue-worker coordination
+- Azure Files document deletion, as well as existing upload/list/download
+- Docker Compose gateway on port 5000, private Functions network, gateway Dockerfile
+- GitHub Actions build validation and separate manual/tag Docker Hub publishing
+- Part 3 Postman collection, gateway smoke script, deployment guide, README pointers
 
-## Outstanding
-- Verify staff-only order status update and queue-worker concurrency under integration tests
-- Verify document deletion backend and forwarding with real Azure Files
-- Robust role provisioning for initial staff/admin accounts (never through public registration)
-- Race-safe uniqueness across Azure Table role partitions
-- Integration tests, Postman Part 3 collection, build checks and fixes
-- Verify Docker Compose gateway integration and harden deployment configuration
-- Docker Hub publishing, VPS provisioning, deployment, live validation and demonstration
-- Production readiness: rate limiting, error handling, upstream timeouts, request validation, safe Swagger exposure
+## Must verify before merging or submitting
+1. Latest GitHub Actions build, JSON, Compose and smoke script syntax checks are green.
+2. End-to-end gateway tests with Azurite: register, login, role-based 401/403, menu CRUD, order queue/status, staff creation.
+3. Real Azure Files integration for staff documents; unavailable under Azurite.
+4. Docker Hub images published and VPS Compose pulls/starts successfully.
+5. Public Swagger URL, VPS firewall, TLS for real credentials, and Part 3 demonstration video.
+6. Verify Admin bootstrap variables removed after account creation.
+7. Add actual public VPS URL and Part 3 video URL to README.
 
-## Configuration
-Set `Jwt__Key` to a cryptographically random secret of at least 32 bytes, `AzureWebJobsStorage` to the Azure Table connection string, and `Functions__BaseUrl` to the private Functions URL.
-Never commit secrets. Current code is an implementation starting point, not production-ready.
+## Known limitations / hardening
+- Email reservations in `UserEmailIndex` are intentionally retained if profile creation fails; manual cleanup may be needed.
+- Public order status contains customer information. Consider requiring an order-specific access token for a real service.
+- JWTs are valid until expiration; no token revocation.
+- The gateway forwards requests to an unauthenticated Functions backend on a private Docker network. Never publish that backend directly.
+- Gateway public Swagger and HTTP port are for coursework demonstration, not hardened Internet production.
+- Tests are not yet confirmed end-to-end; a successful compilation is insufficient.
