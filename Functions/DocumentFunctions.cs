@@ -32,4 +32,17 @@ public sealed class DocumentFunctions(Storage storage)
         var share=storage.Documents;if(share is null)return Missing();if(!Storage.ValidKey(fileName))return new BadRequestResult();
         try{var download=(await share.GetRootDirectoryClient().GetFileClient(fileName).DownloadAsync()).Value;return new FileStreamResult(download.Content,"application/octet-stream"){FileDownloadName=fileName};}catch(RequestFailedException ex)when(ex.Status==404){return new NotFoundResult();}
     }
+    [Function("DeleteStaffDocument")]
+    public async Task<IActionResult> Delete([HttpTrigger(AuthorizationLevel.Anonymous,"delete",Route="documents/{fileName}")] HttpRequest req,string fileName)
+    {
+        var share=storage.Documents;if(share is null)return Missing();
+        if(!Storage.ValidKey(fileName)||fileName.Contains(':')||fileName.IndexOfAny(new[]{'*','"','<','>','|'})>=0)
+            return new BadRequestObjectResult("Invalid filename.");
+        try
+        {
+            await share.GetRootDirectoryClient().GetFileClient(fileName).DeleteAsync();
+            return new NoContentResult();
+        }
+        catch(RequestFailedException ex) when(ex.Status==404) { return new NotFoundResult(); }
+    }
 }
