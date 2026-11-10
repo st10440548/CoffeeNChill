@@ -48,3 +48,15 @@ No secrets or JWT values are included in this report. Local `.env` is not commit
 - Public `GET http://172.209.216.237:5000/api/menu`: HTTP 200 with empty JSON array, expected for fresh storage.
 
 The public port 5000 endpoint is plain HTTP and should be used for non-sensitive coursework demonstrations only; configure TLS before sending credentials or tokens over the network. Azure Files functionality and live-server RBAC/order tests remain unverified. The server-local Compose override and `.env` are not committed.
+
+## Azure VM end-to-end verification — 2026-11-10
+
+Executed from the SSH shell on `CoffeeNChill-VM` against `http://localhost:5000` (server-local HTTP, avoiding public transmission of credentials):
+
+- `scripts/part3-smoke.sh`: all eight reported HTTP checks passed; gateway smoke checks passed.
+- `scripts/part3-admin-staff-test.py`: Admin login (200), Staff creation (201), Staff login (200).
+- `scripts/part3-menu-crud-test.py`: Admin login, create (201), public read (200), update (200), cleanup (204).
+- `scripts/part3-order-queue-test.py`: queue accepted (202), observed Received → Preparing → Ready → Collected, final Collected.
+- `scripts/part3-staff-permissions-test.py`: Staff provision/login; Customer denied menu create/update/delete (403); Staff create/update/delete (201/200/204); queue accepted (202); Customer denied order status update (403); Staff order status update (200).
+
+All five scripts completed successfully on the deployed Azure VM. These results establish the running gateway, Azure Functions, local Azurite persistence and queue worker integration. Azure Files documents, TLS, and final submission artifacts remain outstanding.
