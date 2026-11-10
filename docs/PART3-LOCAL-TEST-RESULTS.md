@@ -35,3 +35,16 @@ The Admin/Staff test creates a unique temporary-named Staff account that persist
 - Docker Hub publication and VPS deployment.
 
 No secrets or JWT values are included in this report. Local `.env` is not committed. Keep `main` unchanged until remaining verification and review.
+
+## Azure VM deployment verified — 2026-11-10
+
+- Azure for Students VM `CoffeeNChill-VM`, Ubuntu 24.04 x64, South Africa North, running.
+- Docker Engine 29.1.3 and Docker Compose 2.40.3 installed.
+- Docker Hub images `primetimeron/coffeenchill-functions:part3` and `primetimeron/coffeenchill-gateway:part3` successfully published and pulled on VM.
+- Initial Azurite image was ARM64-only; server-local Compose override selected `mcr.microsoft.com/azure-storage/azurite:latest` on `linux/amd64`.
+- `sudo docker compose ps`: Azurite healthy; Functions and Gateway running.
+- VM-local `GET http://localhost:5000/health`: HTTP 200 with `{\"status\":\"ok\"}`.
+- From a separate Mac terminal, public `GET http://172.209.216.237:5000/health`: HTTP 200 with `{\"status\":\"ok\"}`.
+- Public `GET http://172.209.216.237:5000/api/menu`: HTTP 200 with empty JSON array, expected for fresh storage.
+
+The public port 5000 endpoint is plain HTTP and should be used for non-sensitive coursework demonstrations only; configure TLS before sending credentials or tokens over the network. Azure Files functionality and live-server RBAC/order tests remain unverified. The server-local Compose override and `.env` are not committed.
