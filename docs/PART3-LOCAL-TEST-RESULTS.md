@@ -2,7 +2,7 @@
 
 Environment: Docker Desktop on Apple Silicon; Functions and Gateway built for `linux/amd64`; Azurite local storage; gateway published on local port `5080` due to a port 5000 conflict.
 
-## Verified manually from Terminal output
+## Verified from Terminal output
 
 - Docker Compose configuration valid and three services started; Azurite healthy.
 - Gateway `GET /health`: HTTP 200, `{"status":"ok"}`.
@@ -22,11 +22,13 @@ BASE_URL=http://localhost:5080 python3 scripts/part3-menu-crud-test.py
 BASE_URL=http://localhost:5080 python3 scripts/part3-order-queue-test.py
 ```
 
-The Admin/Staff test creates a unique temporary-named Staff account that persists in the local user table. The menu test removes its own test item. These new scripts were committed after equivalent manual checks passed; they have not yet been rerun from their committed paths. The order-queue test script likewise reproduces a manually passed test.
+The Admin/Staff test creates a unique temporary-named Staff account that persists in the local user table. The menu test removes its own test item. All three committed Python scripts were rerun successfully from their repository paths on 2026-11-10. The Admin/Staff script passed Admin login, Staff creation and Staff login; the menu CRUD script passed create/read/update/delete; the queue script observed Received, Preparing, Ready and Collected after HTTP 202 acceptance.
+
+## Order queue verified
+
+- On 2026-11-10 POST /api/orders/queue returned HTTP 202; subsequent GET requests observed Received → Preparing → Ready → Collected.
 
 ## Not yet verified
-
-- Order queue processing and status transitions: verified on 2026-11-10. POST /api/orders/queue returned HTTP 202, followed by observed Received → Preparing → Ready → Collected states via GET /api/orders/{orderDate}/{orderId}.
 - Authorized Staff menu operations and Staff order-status updates.
 - Azure Files document operations (require a real Azure Files connection string; Azurite does not emulate Azure Files).
 - Docker Hub publication and VPS deployment.
