@@ -20,6 +20,7 @@ BASE_URL=http://localhost:5080 bash scripts/part3-smoke.sh
 BASE_URL=http://localhost:5080 python3 scripts/part3-admin-staff-test.py
 BASE_URL=http://localhost:5080 python3 scripts/part3-menu-crud-test.py
 BASE_URL=http://localhost:5080 python3 scripts/part3-order-queue-test.py
+BASE_URL=http://localhost:5080 python3 scripts/part3-staff-permissions-test.py
 ```
 
 The Admin/Staff test creates a unique temporary-named Staff account that persists in the local user table. The menu test removes its own test item. All three committed Python scripts were rerun successfully from their repository paths on 2026-11-10. The Admin/Staff script passed Admin login, Staff creation and Staff login; the menu CRUD script passed create/read/update/delete; the queue script observed Received, Preparing, Ready and Collected after HTTP 202 acceptance.
@@ -29,7 +30,7 @@ The Admin/Staff test creates a unique temporary-named Staff account that persist
 - On 2026-11-10 POST /api/orders/queue returned HTTP 202; subsequent GET requests observed Received → Preparing → Ready → Collected.
 
 ## Not yet verified
-- Authorized Staff menu operations and Staff order-status updates.
+- Staff permissions: verified on 2026-11-10. Staff authenticated, created/updated/deleted menu item (201/200/204) and updated an order status (200). Customer menu writes and order status updates were denied (403).
 - Azure Files document operations (require a real Azure Files connection string; Azurite does not emulate Azure Files).
 - Docker Hub publication and VPS deployment.
 
