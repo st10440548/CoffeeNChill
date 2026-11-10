@@ -1,0 +1,18 @@
+name: Part 3 build validation
+on:
+  push:
+    branches: [feature/part3-secure-gateway]
+  pull_request:
+    branches: [main]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Build Functions
+        run: dotnet build CoffeeNChill.csproj -c Release
+      - name: Build Gateway
+        run: dotnet build Gateway/CoffeeNChill.Gateway.csproj -c Release
